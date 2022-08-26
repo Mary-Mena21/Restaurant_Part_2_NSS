@@ -1,73 +1,73 @@
-const parties = [
-    {
-        table: 13,
-        id: 1,
-        Reservation: true,
-        ReservationDate: '8 / 7 / 2022',
-        ReservationTime: '08:00 pm',
-        WaiterName: 'Mason',
-        Meal: 'dinner',
-        HighChairs: false,
-        guestsNumber: 2,
-        Water: ['with ice', 'no ice with lemon'],
-        Drink: ['dr. pepper'],
-        AlcoholDrink: false,
-        SoupSalad: ['salad', 'salad'],
-        Entree: ['salmon', 'cheesburger'],
-        notes: 'no cheese on burger',
-        Desert: ['apple pie', 'cake'],
-        OrderStatus: 'IN PROGRESS'
-    },
-    {
-        table: 14,
-        id: 2,
-        Reservation: false,
-        ReservationDate: 'N/A',
-        ReservationTime: 'N/A',
-        WaiterName: 'Mason',
-        Meal: 'Lunch',
-        HighChairs: false,
-        guestsNumber: 1,
-        Water: ['with extra extra ice'],
-        Drink: ['rum and coke'],
-        AlcoholDrink: true,
-        SoupSalad: ['soup'],
-        Entree: ['cheesburger'],
-        notes: 'sub fries for tots',
-        Desert: ['none'],
-        OrderStatus: 'READY'
-    },
-    {
-        table: 15,
-        id: 3,
-        Reservation: true,
-        ReservationDate: '8 / 7 / 2022',
-        ReservationTime: '07:30 pm',
-        WaiterName: 'Mason',
-        Meal: 'Dinner',
-        HighChairs: true,
-        guestsNumber: 4,
-        Water: ['with ice', 'with ice', 'no ice', 'no ice'],
-        Drink: ['dr. pepper', 'sweet tea', 'miller high life'],
-        AlcoholDrink: true,
-        SoupSalad: ['salad', 'salad', 'soup'],
-        Entree: ['chicken sandwich', 'cheesburger', 'grilled cheese', 'kids chicken tenders'],
-        notes: 'no cheese on grilled cheese',
-        Desert: ['cake', 'cake'],
-        OrderStatus: 'SERVED'
-    },
-];
+import {tablesCopy} from './database.js';
+const tables = tablesCopy();
 
-let mason = '';
-for (const party of parties) {
-    mason += `\n<fieldset class="masonTable">\n\t<legend class="masonLegend">Table_${party.table}</legend>\n\t<ul class="masonList">`;
-    for (const info in party) {
-        if (info !== 'table' && info !== 'id') {
-            mason += `\n\t\t<li>${info}: <span class="masonValue">${party[info]}</span></li>`
+import {menuCopy} from './database.js';
+const menu = menuCopy();
+
+import {serversCopy} from './database.js';
+const servers = serversCopy();
+
+// MASON TABLES
+const masonTables = tables.filter(table => table.serverId === 1);
+
+// DISPLAYING FOOD ITEMS BASED ON MENU ITEM ID'S
+const getOrder = () => {
+    for (const table of masonTables) {
+        table.order = [];
+        for (const order of table.menuID) {
+            for (const item of menu) {
+                if (order === item.id) {
+                    table.order.push(item.menuItem);
+                }
+            }
         }
-    };
-    mason += '\n\t</ul>\n</fieldset>'
-};
+    }
+}
+getOrder()
 
-document.getElementById('mason').innerHTML = mason;
-console.log(mason);
+// CALCULATING TOTAL PRICE FROM COMBINED ITEM PRICES AT EACH TABLE
+const getPrice = () => {
+    for (const table of masonTables) {
+        table.price = 0;
+        for (const order of table.menuID) {
+            for (const item of menu) {
+                if (order === item.id) {
+                    table.price += item.price;
+                }
+            }
+        }
+    }
+}
+getPrice();
+
+// DISPLAY ALL TABLES AND THEIR KEY-VALUE PAIRS
+const displayTableInfo = () => {
+    let HTML = '';
+    for (const masonTable of masonTables) {
+        HTML += `
+            <fieldset class="masonTable"><legend class="masonLegend">Table ${masonTable.id}</legend>
+                <ul class="masonList">
+                    <li>Guests: <span class="masonTableValue">${masonTable.guestsNumber}</span></li>
+                    <li>Reservation: <span class="masonTableValue">${masonTable.reservation}</span></li>
+                    <li>Menu: <span class="masonTableValue">${masonTable.menuType}</span></li>
+                    <li><span class="masonTableKey">Order</span><span class="masonTableValue orders"><br>${masonTable.order.join('<br>')}</span></li>
+                    <li>Order Status: <span class="masonTableValue">${masonTable.orderStatus}</span></li>
+                    <li>Price: <span class="masonTableValue">$${masonTable.price}</span></li>
+                    <li>Tip: <span class="masonTableValue">${masonTable.tipPercent * 100}%</span></li>
+                </ul>
+            </fieldset>`
+    }
+    document.getElementById('mason').innerHTML = HTML;
+}
+displayTableInfo()
+
+// TIPS
+const displayTipsTotal = () => {
+    let tipsTotal = 0;
+    for (const table of masonTables) {
+        tipsTotal += table.price * table.tipPercent;
+    }
+    document.getElementById('masonTips').innerHTML = `Total in Tips: <span class="masonTipsValue">$${tipsTotal.toFixed(2)}</span>`;
+}
+
+displayTipsTotal()
